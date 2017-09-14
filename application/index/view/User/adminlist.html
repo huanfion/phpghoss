@@ -1,0 +1,140 @@
+{extend name="public/base" /}
+
+{block name="seo"}
+<title>{$title|default="页面标题"}</title>
+<meta name="keywords" content="{$keywords|default='页面关键字'}">
+<meta name="description" content="{$desc|default='页面描述'}">
+
+{/block}
+{block name="content"}
+<section class="Hui-article-box">
+    <nav class="breadcrumb"><i class="Hui-iconfont"></i> <a href="/" class="maincolor">首页</a>
+        <span class="c-999 en">&gt;</span>管理员管理
+        <span class="c-666">&gt;</span>管理员列表
+        <a class="btn btn-success radius r" style="line-height:1.6em;margin-top:3px" href="javascript:location.replace(location.href);" title="刷新" ><i class="Hui-iconfont">&#xe68f;</i></a></nav>
+    <div class="Hui-article">
+        <article class="cl pd-20">
+            <!--如果是admin显示用户数量,其它用户没必要显示-->
+            {eq name="$Think.session.user_info.name" value="admin"}
+            <div class="cl pd-5 bg-1 bk-gray mt-20">
+				<span class="l">
+					<a href="javascript:;" onclick="unDelete()" class="btn btn-danger radius">
+						<i class="Hui-iconfont">&#xe6e2;</i> 批量恢复</a>
+					<a href="javascript:;" onclick="admin_add('添加管理员','{:url("user/adminAdd")}','800','500')" class="btn btn-primary radius">
+					<i class="Hui-iconfont">&#xe600;</i> 添加管理员</a>
+				</span>
+                <span class="r">共有数据：<strong>{$count}</strong> 条</span>
+            </div>
+            {/eq}
+            <table class="table table-border table-bordered table-bg">
+                <thead>
+                <tr>
+                    <th colspan="8" scope="col">信息列表</th>
+                </tr>
+                <tr class="text-c">
+                    <th width="40">ID</th>
+                    <th width="100">用户名</th>
+                    <th width="150">邮箱</th>
+                    <th width="100">角色</th>
+                    <th width="50">登陆次数</th>
+                    <th width="130">上次登陆时间</th>
+                    <th width="100">是否已启用</th>
+                    <th width="100">操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                {volist name="list" id="vo"}
+                <tr class="text-c">
+                <td>{$vo.id}</td>
+                <td>{$vo.name}</td>
+                <td>{$vo.email}</td>
+                <td>{$vo.role}</td>
+                <td>{$vo.logincount}</td>
+                <td>{$vo.logintime}</td>
+                <td class="td-status">
+                    {if condition="$vo.status eq '已启用'"}
+                    <span class="label label-success radius">{$vo.status}</span>
+                    {else /}
+                    <span class="label radius">{$vo.status}</span>
+                    {/if}
+                </td>
+                <td class="td-manage">
+                    <!--切换启用与禁用图标-->
+                    <!--只允许admin有权启用或停用-->
+
+                    {eq name="$Think.session.user_info.name" value="admin"}
+                        {if condition="$vo.status eq '已启用'"}
+                            <a onclick="admin_stop(this,{$vo.id})" href="javascript:;" title="停用"><i class="Hui-iconfont">&#xe631;</i></a>
+                        {else/}
+                            <a onclick="admin_start(this,{$vo.id})" herf="javascript:;" title="启用"><i class="Hui-iconfont Hui-iconfont-gouxuan"></i></a>
+                        {/if}
+                        <a title="编辑" href="javascript:;" onclick="admin_edit('编辑','{:url("adminEdit",["id"=>$vo.id])}','1','800','500')"><i class="Hui-iconfont Hui-iconfont-edit"></i></a>
+                    {/eq}
+                    {eq name="$Think.session.user_info.name" value="admin"}
+                    <a onclick="admin_delete(this,{$vo.id})" herf="javascript:;" title="删除"><i class="Hui-iconfont Hui-iconfont-del2"></i></a>
+                    {/eq}
+                </td>
+                </tr>
+                {/volist}
+                </tbody>
+            </table>
+        </article>
+    </div>
+</section>
+{/block}
+
+{block name="js"}
+<script type="text/javascript" src="__STATIC__/lib/My97DatePicker/4.8/WdatePicker.js"></script>
+<script type="text/javascript" src="__STATIC__/lib/datatables/1.10.0/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="__STATIC__/lib/laypage/1.2/laypage.js"></script>
+<script type="text/javascript">
+    function admin_add(title,url,width,height)
+    {
+        $.post(url);
+        layer_show(title,url,width,height);
+    }
+    function admin_stop(obj,id)
+    {
+        layer.confirm("确认要停用吗？",function(index)
+        {
+            $.get("{:url('setStatus')}",{id: id});
+            $(obj).parents("tr").find(".td-manage").prepend('<a onclick="admin_start(this,'+id+')" herf="javascript:\'" title="启用"><i class="Hui-iconfont Hui-iconfont-gouxuan"></i></a>');
+            $(obj).parents("tr").find(".td-status").html('<span class="label radius">已禁用</span>');
+            $(obj).remove();
+
+            layer.msg("已停用！",{icon:5,time:1000});
+        });
+    }
+
+    function admin_start(obj,id)
+    {
+        layer.confirm("确认要启用吗？",function(index)
+        {
+            $.get("{:url('setStatus')}",{id: id});
+            $(obj).parents("tr").find(".td-manage").prepend('<a onclick="admin_stop(this,'+id+')" herf="javascript:\'" title="停用"><i class=" Hui-iconfont Hui-iconfont-shenhe-tingyong"></i></a>');
+            $(obj).parents("tr").find(".td-status").html('<span class="label label-success radius">已启用</span>');
+            $(obj).remove();
+
+            layer.msg("已启用！",{icon:5,time:1000});
+        });
+    }
+//管理员编辑
+    function admin_edit(title,url,id,width,height)
+    {
+        $.get(url,{id:id});
+        layer_show(title,url,width,height);
+    }
+    //管理员删除
+    function admin_delete(obj,id)
+    {
+        layer.confirm("确认要删除吗？",function(index)
+        {
+            $.get("{:url('deleteAdmin')}",{id:id});
+            $(obj).parents("tr").remove();
+            layer.msg("已删除！",{icon:1,time:1000});
+        })
+    }
+</script>
+{/block}
+</body>
+</html>
