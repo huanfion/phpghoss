@@ -8,6 +8,8 @@
 
 namespace app\index\controller;
 
+use \think\Db;
+use think\db\Query;
 use think\Request;
 use app\index\model\admin;
 use \think\Session;
@@ -23,7 +25,7 @@ class User extends Base
     {
         //初始化参数
        $status=0;
-       $result="";
+       $result="验证失败";
        $data=$request->param();
 
        //创建验证规则
@@ -74,6 +76,7 @@ class User extends Base
 //        Session::delete("user_id");
 //        Session::delete("user_info");
         //Session::set("good",1);
+        admin::update(['logintime'=>time()],['id'=>Session::get("user_id")]);
         Session::delete("user_id");
         Session::delete("user_info");
         $this->success('注销成功', 'user/login');
@@ -84,7 +87,11 @@ class User extends Base
         $this->assign("title","管理员列表");
         $this->assign("desc","教学案例");
         $this->assign("keywords","教学管理系统管理员列表");
-
+        $s=Db::table("admin")->where("id",1)->find();
+        $s2=Db::getTableInfo('admin');
+        $query=new Query();
+        $query->table('admin')->where("status",1);
+       $s1= Db::find($query);
         $this->view->count=admin::count();
 
         //先判断用户是不是admin用户
@@ -109,11 +116,39 @@ class User extends Base
         $this->view->assign('desc','PHP中文网ThinkPHP5开发实战课程');
         return view();
     }
+    public function  addAdmin(Request $request)
+    {
+        $data=$request->param();
+        $status=1;
+        $message="添加成功！";
+
+        $rule=[
+            "name|用户名"=>"require|min:3|max:10",
+            "password|密码"=>"require|min:6|max:10",
+            "email|邮箱"=>"require|email"
+        ];
+        $result=$this->validate($data,$rule);
+
+        if($result==true)
+        {
+            $admin=admin::create($data);
+//            $user=new admin();
+//            $user->name="liuhuan";
+//            $user->save();
+            if($admin==null)
+            {
+                $status=0;
+                $message="添加失败！";
+            }
+        }
+        return ["status"=>$status,"message"=>$message];
+    }
     //编辑管理员
     public function adminEdit(Request $request)
     {
         $user_id=$request->param("id");
         $admin=admin::get(["id"=>$user_id]);
+
 
         $this->assign("title","编辑管理员信息");
         $this->assign("keywords","编辑管理员信息");
@@ -163,4 +198,31 @@ public function deleteAdmin(Request $request)
     }
 
 
+    //检测用户名是否有效
+    public function checkUserName(Request $request)
+    {
+        $userName=$request->param("name");
+        $status=1;
+        $message="用户名可用!";
+        if(admin::get(['name'=>$userName]))
+        {
+            $status=0;
+            $message='用户名重复，请重新输入~~';
+        }
+        return ["status"=>$status,"message"=>$message];
+
+    }
+
+    public function checkUserEmail(Request $request)
+    {
+        $email=$request->param("email");
+        $status=1;
+        $message="邮箱可用！";
+        if(admin::get(['email'=>$email]))
+        {
+            $status=0;
+            $message="邮箱重复，请重新输入~~~";
+        }
+        return ["status"=>$status,"message"=>$message];
+    }
 }
