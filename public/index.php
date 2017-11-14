@@ -12,5 +12,9 @@
 
 // 定义应用目录
 define('APP_PATH', __DIR__ . '/../application/');
+// 开启调试模式
+define('APP_DEBUG', true);
+// 绑定到index模块 手动绑定 https://www.kancloud.cn/manual/thinkphp5/118040
+//define('BIND_MODULE','index');
 // 加载框架引导文件
 require __DIR__ . '/../thinkphp/start.php';

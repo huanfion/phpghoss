@@ -19,7 +19,8 @@
         "php": ">=5.5.0",
         "topthink/framework": "~5.0.0",
         "gregwar/captcha": "^1.1",
-        "topthink/think-captcha":"^1.0"
+        "topthink/think-captcha":"^1.0",
+        "monolog/monolog": "^1.23"
     },
     "extra": {
         "think-path": "thinkphp"
